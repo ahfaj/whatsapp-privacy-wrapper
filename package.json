@@ -1,0 +1,36 @@
+{
+  "name": "whatsapp-privacy-wrapper",
+  "version": "1.0.0",
+  "description": "Electron app that wraps WhatsApp Web with a privacy blur layer",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win"
+  },
+  "build": {
+    "appId": "com.yourname.whatsapp-privacy",
+    "productName": "WhatsApp Privacy Wrapper",
+    "asar": true,
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "tray.js",
+      "privacy/**",
+      "assets/**"
+    ]
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0"
+  }
+}

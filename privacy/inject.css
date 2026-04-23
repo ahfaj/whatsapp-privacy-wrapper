@@ -1,0 +1,145 @@
+/*
+ * inject.css — WhatsApp Privacy Wrapper
+ *
+ * WhatsApp Web uses obfuscated, frequently-changing class names.
+ * These selectors use structural / attribute / role patterns where possible
+ * to be more resilient to WhatsApp updates.
+ *
+ * The .privacy-off class on <body> disables all blur (the JS toggle mechanism).
+ *
+ * ⚠️  If blur stops working after a WhatsApp Web update, re-inspect the DOM
+ *     and update the selectors below to match the current structure.
+ */
+
+/* ─── Transition on all blurred elements ──────────────────────────────────── */
+[data-id],
+[data-testid="msg-container"],
+[data-testid="cell-frame-container"],
+[data-testid="conversation-compose-box-input"],
+[aria-label][role="row"],
+img[src*="blob:"],
+img[src*="https://web.whatsapp.com"],
+span[dir="ltr"],
+span[dir="rtl"],
+div[class*="copyable-text"],
+div[class*="message-in"],
+div[class*="message-out"] {
+  transition: filter 0.15s ease, opacity 0.15s ease;
+}
+
+/* ─── Message bubbles — inbound ───────────────────────────────────────────── */
+div[class*="message-in"] span[dir],
+div[class*="message-in"] div[class*="copyable-text"],
+div[data-testid="msg-container"] span[dir],
+div[data-testid="msg-container"] div[class*="copyable-text"] {
+  filter: blur(6px);
+}
+
+/* ─── Message bubbles — outbound ──────────────────────────────────────────── */
+div[class*="message-out"] span[dir],
+div[class*="message-out"] div[class*="copyable-text"] {
+  filter: blur(6px);
+}
+
+/* ─── Chat list — last-message preview text ───────────────────────────────── */
+[data-testid="cell-frame-container"] [data-testid="last-msg-status"] ~ span,
+[data-testid="cell-frame-container"] span[dir="ltr"],
+[data-testid="cell-frame-container"] span[dir="rtl"],
+div[aria-label][role="row"] span[dir] {
+  filter: blur(6px);
+}
+
+/* ─── Contact / group name labels ─────────────────────────────────────────── */
+[data-testid="cell-frame-title"] span,
+[data-testid="conversation-header"] span[dir],
+header span[dir] {
+  filter: blur(6px);
+}
+
+/* ─── Profile pictures ────────────────────────────────────────────────────── */
+img[data-testid="default-user"],
+[data-testid="avatar"] img,
+[data-testid="photo-editor-img"],
+div[style*="background-image"][class*="avatar"],
+img[src*="_avatar"] {
+  filter: blur(6px);
+}
+
+/* Generic: any circular avatar-style img inside a chat row */
+[data-testid="cell-frame-container"] img,
+[data-testid="conversation-header"] img {
+  filter: blur(6px);
+}
+
+/* ─── Media thumbnails (images, video, stickers) ──────────────────────────── */
+img[src^="blob:"],
+video[src^="blob:"],
+div[data-testid="media-url-preview"] img,
+div[class*="sticker"] img,
+div[class*="video-thumb"] img {
+  filter: blur(6px);
+}
+
+/* ─── Text input — opacity instead of blur (avoids layout issues) ─────────── */
+div[data-testid="conversation-compose-box-input"],
+div[contenteditable="true"][data-tab] {
+  opacity: 0.15;
+  filter: none;   /* explicitly no blur on the input */
+}
+
+/* ─── Hover reveal — parent row or bubble ─────────────────────────────────── */
+div[class*="message-in"]:hover span[dir],
+div[class*="message-in"]:hover div[class*="copyable-text"],
+div[data-testid="msg-container"]:hover span[dir],
+div[data-testid="msg-container"]:hover div[class*="copyable-text"],
+div[class*="message-out"]:hover span[dir],
+div[class*="message-out"]:hover div[class*="copyable-text"],
+[data-testid="cell-frame-container"]:hover [data-testid="last-msg-status"] ~ span,
+[data-testid="cell-frame-container"]:hover span[dir],
+div[aria-label][role="row"]:hover span[dir],
+[data-testid="cell-frame-title"]:hover span,
+[data-testid="conversation-header"]:hover span[dir],
+header:hover span[dir],
+[data-testid="cell-frame-container"]:hover img,
+[data-testid="conversation-header"]:hover img,
+[data-testid="avatar"]:hover img,
+div[class*="message-in"]:hover img[src^="blob:"],
+div[class*="message-out"]:hover img[src^="blob:"],
+div[data-testid="msg-container"]:hover img[src^="blob:"],
+div[data-testid="msg-container"]:hover video[src^="blob:"],
+div[contenteditable="true"][data-tab]:hover {
+  filter: none;
+  opacity: 1;
+}
+
+/* ─── .privacy-off override — disables ALL blur ───────────────────────────── */
+/*
+ * The JS toggle adds/removes .privacy-off on <body>.
+ * These rules override everything above with maximum specificity.
+ */
+body.privacy-off div[class*="message-in"] span[dir],
+body.privacy-off div[class*="message-in"] div[class*="copyable-text"],
+body.privacy-off div[data-testid="msg-container"] span[dir],
+body.privacy-off div[data-testid="msg-container"] div[class*="copyable-text"],
+body.privacy-off div[class*="message-out"] span[dir],
+body.privacy-off div[class*="message-out"] div[class*="copyable-text"],
+body.privacy-off [data-testid="cell-frame-container"] span[dir],
+body.privacy-off div[aria-label][role="row"] span[dir],
+body.privacy-off [data-testid="cell-frame-title"] span,
+body.privacy-off [data-testid="conversation-header"] span[dir],
+body.privacy-off header span[dir],
+body.privacy-off [data-testid="cell-frame-container"] img,
+body.privacy-off [data-testid="conversation-header"] img,
+body.privacy-off [data-testid="avatar"] img,
+body.privacy-off img[src^="blob:"],
+body.privacy-off video[src^="blob:"],
+body.privacy-off div[class*="sticker"] img {
+  filter: none !important;
+  opacity: 1 !important;
+}
+
+body.privacy-off div[data-testid="conversation-compose-box-input"],
+body.privacy-off div[contenteditable="true"][data-tab] {
+  opacity: 1 !important;
+  filter: none !important;
+}
