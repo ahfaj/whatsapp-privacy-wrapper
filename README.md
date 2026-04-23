@@ -91,6 +91,71 @@ git push origin v1.0.1
 
 ---
 
+## Risk & Data Control
+
+This section explains every risk this app carries, how serious it is, and exactly what you can do about it. Read this before installing, and share it with anyone else you give the app to.
+
+---
+
+### Risk matrix
+
+| # | Risk | Level | What it means in plain English | What you should do |
+|---|---|---|---|---|
+| 1 | Session data stored unencrypted on your PC | ⚠️ Medium | Your WhatsApp login and message cache sit in a folder on your hard drive. Anyone with access to your PC could read it. | Use a strong Windows login password. Enable Windows disk encryption (BitLocker). Delete the data folder when uninstalling — see below. |
+| 2 | App is unsigned (no certificate) | ℹ️ Low | Windows can't verify who made the app, so it shows a warning on first run. | Only ever download from **your own GitHub Releases page**. Never install a copy sent to you by someone else. |
+| 3 | Your GitHub account could be compromised | ⚠️ Medium | If someone gains access to your GitHub account, they could push a modified version of the app. | Enable **two-factor authentication (2FA)** on your GitHub account immediately — GitHub → Settings → Password and authentication. |
+| 4 | WhatsApp Web inherits WhatsApp's own risks | ℹ️ Low | This app loads the real WhatsApp Web. Any vulnerability in WhatsApp Web affects this app too. | Nothing extra — this is the same risk as using WhatsApp Web in a browser. |
+| 5 | Blur may stop working silently after a WhatsApp update | ℹ️ Low | WhatsApp occasionally renames its internal code. If blur breaks, the app still works — it just shows messages unblurred. | Check the Releases page after any WhatsApp Web update. A fix will be posted when needed. |
+| 6 | No automatic updates | ℹ️ Low | Security fixes won't reach you automatically. | Revisit the Releases page occasionally and reinstall if a new version is posted. |
+| 7 | App reads and injects code into WhatsApp Web | ℹ️ Very low | The injected code only adds and removes a CSS class for blur. It does not read, copy, or transmit messages. | You can verify this yourself — open `privacy/inject.js` and `privacy/inject.css` in Notepad. The full source is readable plain text. |
+
+---
+
+### Where your data is stored
+
+When you use the app, WhatsApp session data (your login, cache, and media) is saved here on your PC:
+
+```
+C:\Users\YourName\AppData\Roaming\whatsapp-privacy-wrapper\
+```
+
+This folder is created automatically when you first log in. It is **not deleted** when you uninstall the app.
+
+---
+
+### How to delete your data (before or after uninstalling)
+
+Do this any time you want to fully wipe your session — for example before giving away your PC, or to force a fresh WhatsApp login.
+
+1. Press `Windows key + R`
+2. Type `%appdata%` and press Enter — a folder window opens
+3. Find the folder called `whatsapp-privacy-wrapper`
+4. Right-click it → **Delete**
+5. Empty your Recycle Bin to permanently remove it
+
+After deleting, the next time you open the app it will ask you to scan the WhatsApp QR code again.
+
+---
+
+### How to fully uninstall
+
+1. Go to Windows **Settings → Apps → Installed apps**
+2. Find **WhatsApp Privacy Wrapper** → Uninstall
+3. Then follow the data deletion steps above — the uninstaller does not remove your session data automatically
+
+---
+
+### Recommended one-time security actions
+
+These take less than 5 minutes and significantly reduce your risk:
+
+- [ ] Enable 2FA on your GitHub account — github.com → Settings → Password and authentication
+- [ ] Make sure your Windows account has a strong password
+- [ ] Consider enabling BitLocker disk encryption — Windows Settings → Privacy & Security → Device encryption
+- [ ] Bookmark your own Releases page as the only trusted download source
+
+---
+
 ## License
 
 MIT

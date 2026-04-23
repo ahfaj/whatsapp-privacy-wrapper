@@ -36,6 +36,14 @@ function createWindow() {
   // Persistent session — keeps the user logged in across launches.
   const whatsappSession = session.fromPartition('persist:whatsapp');
 
+  // Spoof a real Chrome user agent so WhatsApp Web doesn't reject the browser.
+  // Electron's default UA includes the word "Electron" which WhatsApp blocks.
+  whatsappSession.setUserAgent(
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) ' +
+    'AppleWebKit/537.36 (KHTML, like Gecko) ' +
+    'Chrome/124.0.0.0 Safari/537.36'
+  );
+
   // Permission handler: allow media (camera/mic for calls), deny everything else.
   whatsappSession.setPermissionRequestHandler((_webContents, permission, callback) => {
     const allowed = ['media'];
