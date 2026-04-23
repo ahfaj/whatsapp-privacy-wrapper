@@ -52,7 +52,7 @@ This warning appears on first install only.
 ## Known limitations
 
 - **CSS selector drift** — WhatsApp may rename its internal CSS classes after an update. If blur stops working, the selectors in `privacy/inject.css` need to be updated. Check the [Releases page](../../releases) for a fix.
-- **Voice/video calls** — may or may not work. WhatsApp Web calls depend on browser-specific behaviour. Not guaranteed.
+- **Voice/video calls** — may not work. WhatsApp Web calls depend on browser-specific behaviour. Not guaranteed.
 - **Single account only** — one WhatsApp account per install.
 - **No auto-updates** — when a new version is available, download it from the Releases page and run it over the existing install.
 - **Windows only** — this build targets Windows. Mac/Linux support may come later.
@@ -129,17 +129,6 @@ After deleting, the next time you open the app it will ask you to scan the Whats
 1. Go to Windows **Settings → Apps → Installed apps**
 2. Find **WhatsApp Privacy Wrapper** → Uninstall
 3. Then follow the data deletion steps above — the uninstaller does not remove your session data automatically
-
----
-
-### Recommended one-time security actions
-
-These take less than 5 minutes and significantly reduce your risk:
-
-- [ ] Enable 2FA on your GitHub account — github.com → Settings → Password and authentication
-- [ ] Make sure your Windows account has a strong password
-- [ ] Consider enabling BitLocker disk encryption — Windows Settings → Privacy & Security → Device encryption
-- [ ] Bookmark your own Releases page as the only trusted download source
 
 ---
 
