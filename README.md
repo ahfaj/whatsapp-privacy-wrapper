@@ -97,19 +97,6 @@ This section explains every risk this app carries, how serious it is, and exactl
 
 ---
 
-### Risk matrix
-
-| # | Risk | Level | What it means in plain English | What you should do |
-|---|---|---|---|---|
-| 1 | Session data stored unencrypted on your PC | ⚠️ Medium | Your WhatsApp login and message cache sit in a folder on your hard drive. Anyone with access to your PC could read it. | Use a strong Windows login password. Enable Windows disk encryption (BitLocker). Delete the data folder when uninstalling — see below. |
-| 2 | App is unsigned (no certificate) | ℹ️ Low | Windows can't verify who made the app, so it shows a warning on first run. | Only ever download from **your own GitHub Releases page**. Never install a copy sent to you by someone else. |
-| 3 | Your GitHub account could be compromised | ⚠️ Medium | If someone gains access to your GitHub account, they could push a modified version of the app. | Enable **two-factor authentication (2FA)** on your GitHub account immediately — GitHub → Settings → Password and authentication. |
-| 4 | WhatsApp Web inherits WhatsApp's own risks | ℹ️ Low | This app loads the real WhatsApp Web. Any vulnerability in WhatsApp Web affects this app too. | Nothing extra — this is the same risk as using WhatsApp Web in a browser. |
-| 5 | Blur may stop working silently after a WhatsApp update | ℹ️ Low | WhatsApp occasionally renames its internal code. If blur breaks, the app still works — it just shows messages unblurred. | Check the Releases page after any WhatsApp Web update. A fix will be posted when needed. |
-| 6 | No automatic updates | ℹ️ Low | Security fixes won't reach you automatically. | Revisit the Releases page occasionally and reinstall if a new version is posted. |
-| 7 | App reads and injects code into WhatsApp Web | ℹ️ Very low | The injected code only adds and removes a CSS class for blur. It does not read, copy, or transmit messages. | You can verify this yourself — open `privacy/inject.js` and `privacy/inject.css` in Notepad. The full source is readable plain text. |
-
----
 
 ### Where your data is stored
 
