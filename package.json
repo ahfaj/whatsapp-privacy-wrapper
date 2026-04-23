@@ -1,6 +1,6 @@
 {
-  "name": "whatsapp-privacy-wrapper",
-  "version": "1.0.0",
+  "name": "siwhatsapp",
+  "version": "1.2.0",
   "description": "Electron app that wraps WhatsApp Web with a privacy blur layer",
   "main": "main.js",
   "scripts": {
@@ -8,8 +8,8 @@
     "build": "electron-builder --win"
   },
   "build": {
-    "appId": "com.yourname.whatsapp-privacy",
-    "productName": "WhatsApp Privacy Wrapper",
+    "appId": "com.yourname.siwhatsapp",
+    "productName": "SiWhatsapp",
     "asar": true,
     "win": {
       "target": "nsis",

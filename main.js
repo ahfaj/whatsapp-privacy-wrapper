@@ -36,17 +36,20 @@ function createWindow() {
   // Persistent session — keeps the user logged in across launches.
   const whatsappSession = session.fromPartition('persist:whatsapp');
 
-  // Spoof a real Chrome user agent so WhatsApp Web doesn't reject the browser.
-  // Electron's default UA includes the word "Electron" which WhatsApp blocks.
+  // Spoof a real Chrome user agent so WhatsApp Web accepts the browser and
+  // enables calling features. Electron's default UA includes the word "Electron"
+  // which WhatsApp detects and uses to hide calls and redirect to the native app.
   whatsappSession.setUserAgent(
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) ' +
     'AppleWebKit/537.36 (KHTML, like Gecko) ' +
-    'Chrome/124.0.0.0 Safari/537.36'
+    'Chrome/131.0.0.0 Safari/537.36'
   );
 
-  // Permission handler: allow media (camera/mic for calls), deny everything else.
+  // Permission handler.
+  // Allowed: media (camera + mic) and notifications — both required for calls.
+  // Everything else is denied.
   whatsappSession.setPermissionRequestHandler((_webContents, permission, callback) => {
-    const allowed = ['media'];
+    const allowed = ['media', 'notifications'];
     callback(allowed.includes(permission));
   });
 
@@ -56,7 +59,7 @@ function createWindow() {
     height: 800,
     minWidth: 800,
     minHeight: 600,
-    title: 'WhatsApp Privacy Wrapper',
+    title: 'SiWhatsapp',
     icon: path.join(__dirname, 'assets', 'icon.ico'),
     webPreferences: {
       // The BrowserWindow itself has no web content; lock it down anyway.
