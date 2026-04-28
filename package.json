@@ -1,36 +1,46 @@
 {
   "name": "siwhatsapp",
-  "version": "1.2.0",
-  "description": "Electron app that wraps WhatsApp Web with a privacy blur layer",
+  "version": "1.3.0",
+  "description": "WhatsApp Web desktop wrapper with privacy blur",
   "main": "main.js",
+  "author": "ahfaj",
+  "license": "MIT",
   "scripts": {
     "start": "electron .",
     "build": "electron-builder --win"
   },
+  "dependencies": {},
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0"
+  },
   "build": {
-    "appId": "com.yourname.siwhatsapp",
+    "appId": "com.ahfaj.siwhatsapp",
     "productName": "SiWhatsapp",
     "asar": true,
-    "win": {
-      "target": "nsis",
-      "icon": "assets/icon.ico"
-    },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true
+    "directories": {
+      "output": "dist"
     },
     "files": [
       "main.js",
       "preload.js",
       "tray.js",
+      "settings.js",
+      "updater.js",
       "privacy/**",
+      "locales/**",
       "assets/**"
-    ]
-  },
-  "devDependencies": {
-    "electron": "^33.0.0",
-    "electron-builder": "^25.0.0"
+    ],
+    "win": {
+      "icon": "assets/icon.ico",
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": false,
+      "deleteAppDataOnUninstall": false,
+      "artifactName": "SiWhatsapp-Setup-${version}.exe"
+    }
   }
 }

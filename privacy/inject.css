@@ -1,11 +1,8 @@
 /*
- * inject.css — WhatsApp Privacy Wrapper
+ * inject.css — SiWhatsapp v1.3.0
  *
- * WhatsApp Web uses obfuscated, frequently-changing class names.
- * These selectors use structural / attribute / role patterns where possible
- * to be more resilient to WhatsApp updates.
- *
- * The .privacy-off class on <body> disables all blur (the JS toggle mechanism).
+ * Base selectors carried over from v1.2.0 (proven working).
+ * v1.3.0 adds 4-mode system: .blur-all, .blur-list, .blur-chat, no-class.
  *
  * ⚠️  If blur stops working after a WhatsApp Web update, re-inspect the DOM
  *     and update the selectors below to match the current structure.
@@ -27,119 +24,255 @@ div[class*="message-out"] {
   transition: filter 0.15s ease, opacity 0.15s ease;
 }
 
-/* ─── Message bubbles — inbound ───────────────────────────────────────────── */
-div[class*="message-in"] span[dir],
-div[class*="message-in"] div[class*="copyable-text"],
-div[data-testid="msg-container"] span[dir],
-div[data-testid="msg-container"] div[class*="copyable-text"] {
+
+/* ════════════════════════════════════════════════════════════════════
+   MODE 1 — .blur-all — blur everything
+   ════════════════════════════════════════════════════════════════════ */
+
+/* Message bubbles — inbound */
+body.blur-all div[class*="message-in"] span[dir],
+body.blur-all div[class*="message-in"] div[class*="copyable-text"],
+body.blur-all div[data-testid="msg-container"] span[dir],
+body.blur-all div[data-testid="msg-container"] div[class*="copyable-text"] {
   filter: blur(6px);
 }
 
-/* ─── Message bubbles — outbound ──────────────────────────────────────────── */
-div[class*="message-out"] span[dir],
-div[class*="message-out"] div[class*="copyable-text"] {
+/* Message bubbles — outbound */
+body.blur-all div[class*="message-out"] span[dir],
+body.blur-all div[class*="message-out"] div[class*="copyable-text"] {
   filter: blur(6px);
 }
 
-/* ─── Chat list — last-message preview text ───────────────────────────────── */
-[data-testid="cell-frame-container"] [data-testid="last-msg-status"] ~ span,
-[data-testid="cell-frame-container"] span[dir="ltr"],
-[data-testid="cell-frame-container"] span[dir="rtl"],
-div[aria-label][role="row"] span[dir] {
+/* Chat list — last-message preview text */
+body.blur-all [data-testid="cell-frame-container"] [data-testid="last-msg-status"] ~ span,
+body.blur-all [data-testid="cell-frame-container"] span[dir="ltr"],
+body.blur-all [data-testid="cell-frame-container"] span[dir="rtl"],
+body.blur-all div[aria-label][role="row"] span[dir] {
   filter: blur(6px);
 }
 
-/* ─── Contact / group name labels ─────────────────────────────────────────── */
-[data-testid="cell-frame-title"] span,
-[data-testid="conversation-header"] span[dir],
-header span[dir] {
+/* Contact / group name labels */
+body.blur-all [data-testid="cell-frame-title"] span,
+body.blur-all [data-testid="conversation-header"] span[dir],
+body.blur-all header span[dir] {
   filter: blur(6px);
 }
 
-/* ─── Profile pictures ────────────────────────────────────────────────────── */
-img[data-testid="default-user"],
-[data-testid="avatar"] img,
-[data-testid="photo-editor-img"],
-div[style*="background-image"][class*="avatar"],
-img[src*="_avatar"] {
+/* Profile pictures */
+body.blur-all img[data-testid="default-user"],
+body.blur-all [data-testid="avatar"] img,
+body.blur-all [data-testid="photo-editor-img"],
+body.blur-all div[style*="background-image"][class*="avatar"],
+body.blur-all img[src*="_avatar"],
+body.blur-all [data-testid="cell-frame-container"] img,
+body.blur-all [data-testid="conversation-header"] img {
   filter: blur(6px);
 }
 
-/* Generic: any circular avatar-style img inside a chat row */
-[data-testid="cell-frame-container"] img,
-[data-testid="conversation-header"] img {
+/* Media thumbnails — excludes sticker picker panel */
+body.blur-all div[data-testid="msg-container"] img[src^="blob:"],
+body.blur-all div[class*="message-in"] img[src^="blob:"],
+body.blur-all div[class*="message-out"] img[src^="blob:"],
+body.blur-all video[src^="blob:"],
+body.blur-all div[data-testid="media-url-preview"] img,
+body.blur-all div[class*="video-thumb"] img {
   filter: blur(6px);
 }
 
-/* ─── Media thumbnails (images, video, stickers) ──────────────────────────── */
-img[src^="blob:"],
-video[src^="blob:"],
-div[data-testid="media-url-preview"] img,
-div[class*="sticker"] img,
-div[class*="video-thumb"] img {
-  filter: blur(6px);
-}
-
-/* ─── Text input — opacity instead of blur (avoids layout issues) ─────────── */
-div[data-testid="conversation-compose-box-input"],
-div[contenteditable="true"][data-tab] {
+/* Text input — opacity instead of blur */
+body.blur-all div[data-testid="conversation-compose-box-input"],
+body.blur-all div[contenteditable="true"][data-tab] {
   opacity: 0.15;
-  filter: none;   /* explicitly no blur on the input */
-}
-
-/* ─── Hover reveal — parent row or bubble ─────────────────────────────────── */
-div[class*="message-in"]:hover span[dir],
-div[class*="message-in"]:hover div[class*="copyable-text"],
-div[data-testid="msg-container"]:hover span[dir],
-div[data-testid="msg-container"]:hover div[class*="copyable-text"],
-div[class*="message-out"]:hover span[dir],
-div[class*="message-out"]:hover div[class*="copyable-text"],
-[data-testid="cell-frame-container"]:hover [data-testid="last-msg-status"] ~ span,
-[data-testid="cell-frame-container"]:hover span[dir],
-div[aria-label][role="row"]:hover span[dir],
-[data-testid="cell-frame-title"]:hover span,
-[data-testid="conversation-header"]:hover span[dir],
-header:hover span[dir],
-[data-testid="cell-frame-container"]:hover img,
-[data-testid="conversation-header"]:hover img,
-[data-testid="avatar"]:hover img,
-div[class*="message-in"]:hover img[src^="blob:"],
-div[class*="message-out"]:hover img[src^="blob:"],
-div[data-testid="msg-container"]:hover img[src^="blob:"],
-div[data-testid="msg-container"]:hover video[src^="blob:"],
-div[contenteditable="true"][data-tab]:hover {
   filter: none;
+}
+
+/* Hover reveal — mode 1 */
+body.blur-all div[class*="message-in"]:hover span[dir],
+body.blur-all div[class*="message-in"]:hover div[class*="copyable-text"],
+body.blur-all div[data-testid="msg-container"]:hover span[dir],
+body.blur-all div[data-testid="msg-container"]:hover div[class*="copyable-text"],
+body.blur-all div[class*="message-out"]:hover span[dir],
+body.blur-all div[class*="message-out"]:hover div[class*="copyable-text"],
+body.blur-all [data-testid="cell-frame-container"]:hover [data-testid="last-msg-status"] ~ span,
+body.blur-all [data-testid="cell-frame-container"]:hover span[dir],
+body.blur-all div[aria-label][role="row"]:hover span[dir],
+body.blur-all [data-testid="cell-frame-title"]:hover span,
+body.blur-all [data-testid="conversation-header"]:hover span[dir],
+body.blur-all header:hover span[dir],
+body.blur-all [data-testid="cell-frame-container"]:hover img,
+body.blur-all [data-testid="conversation-header"]:hover img,
+body.blur-all [data-testid="avatar"]:hover img,
+body.blur-all div[class*="message-in"]:hover img[src^="blob:"],
+body.blur-all div[class*="message-out"]:hover img[src^="blob:"],
+body.blur-all div[data-testid="msg-container"]:hover img[src^="blob:"],
+body.blur-all div[data-testid="msg-container"]:hover video[src^="blob:"],
+body.blur-all div[contenteditable="true"][data-tab]:hover {
+  filter: none !important;
+  opacity: 1 !important;
+}
+
+
+/* ════════════════════════════════════════════════════════════════════
+   MODE 2 — .blur-list — left panel (chat list) only
+   ════════════════════════════════════════════════════════════════════ */
+
+/* Chat list text */
+body.blur-list [data-testid="cell-frame-container"] [data-testid="last-msg-status"] ~ span,
+body.blur-list [data-testid="cell-frame-container"] span[dir="ltr"],
+body.blur-list [data-testid="cell-frame-container"] span[dir="rtl"],
+body.blur-list div[aria-label][role="row"] span[dir] {
+  filter: blur(6px);
+}
+
+/* Chat list names */
+body.blur-list [data-testid="cell-frame-title"] span {
+  filter: blur(6px);
+}
+
+/* Chat list avatars */
+body.blur-list [data-testid="cell-frame-container"] img,
+body.blur-list img[data-testid="default-user"],
+body.blur-list [data-testid="avatar"] img {
+  filter: blur(6px);
+}
+
+/* Hover reveal — mode 2 */
+body.blur-list [data-testid="cell-frame-container"]:hover [data-testid="last-msg-status"] ~ span,
+body.blur-list [data-testid="cell-frame-container"]:hover span[dir],
+body.blur-list div[aria-label][role="row"]:hover span[dir],
+body.blur-list [data-testid="cell-frame-title"]:hover span,
+body.blur-list [data-testid="cell-frame-container"]:hover img,
+body.blur-list [data-testid="avatar"]:hover img {
+  filter: none !important;
+  opacity: 1 !important;
+}
+
+
+/* ════════════════════════════════════════════════════════════════════
+   MODE 3 — .blur-chat — right panel (open conversation) only
+   ════════════════════════════════════════════════════════════════════ */
+
+/* Message bubbles */
+body.blur-chat div[class*="message-in"] span[dir],
+body.blur-chat div[class*="message-in"] div[class*="copyable-text"],
+body.blur-chat div[data-testid="msg-container"] span[dir],
+body.blur-chat div[data-testid="msg-container"] div[class*="copyable-text"],
+body.blur-chat div[class*="message-out"] span[dir],
+body.blur-chat div[class*="message-out"] div[class*="copyable-text"] {
+  filter: blur(6px);
+}
+
+/* Conversation header name */
+body.blur-chat [data-testid="conversation-header"] span[dir],
+body.blur-chat header span[dir] {
+  filter: blur(6px);
+}
+
+/* Conversation header avatar */
+body.blur-chat [data-testid="conversation-header"] img {
+  filter: blur(6px);
+}
+
+/* Media thumbnails — excludes sticker picker panel */
+body.blur-chat div[data-testid="msg-container"] img[src^="blob:"],
+body.blur-chat div[class*="message-in"] img[src^="blob:"],
+body.blur-chat div[class*="message-out"] img[src^="blob:"],
+body.blur-chat video[src^="blob:"],
+body.blur-chat div[data-testid="media-url-preview"] img,
+body.blur-chat div[class*="video-thumb"] img {
+  filter: blur(6px);
+}
+
+/* Text input */
+body.blur-chat div[data-testid="conversation-compose-box-input"],
+body.blur-chat div[contenteditable="true"][data-tab] {
+  opacity: 0.15;
+  filter: none;
+}
+
+/* Hover reveal — mode 3 */
+body.blur-chat div[class*="message-in"]:hover span[dir],
+body.blur-chat div[class*="message-in"]:hover div[class*="copyable-text"],
+body.blur-chat div[data-testid="msg-container"]:hover span[dir],
+body.blur-chat div[data-testid="msg-container"]:hover div[class*="copyable-text"],
+body.blur-chat div[class*="message-out"]:hover span[dir],
+body.blur-chat div[class*="message-out"]:hover div[class*="copyable-text"],
+body.blur-chat [data-testid="conversation-header"]:hover span[dir],
+body.blur-chat header:hover span[dir],
+body.blur-chat [data-testid="conversation-header"]:hover img,
+body.blur-chat div[class*="message-in"]:hover img[src^="blob:"],
+body.blur-chat div[class*="message-out"]:hover img[src^="blob:"],
+body.blur-chat div[data-testid="msg-container"]:hover img[src^="blob:"],
+body.blur-chat div[data-testid="msg-container"]:hover video[src^="blob:"],
+body.blur-chat div[contenteditable="true"][data-tab]:hover {
+  filter: none !important;
+  opacity: 1 !important;
+}
+
+
+/* ════════════════════════════════════════════════════════════════════
+   MODE 4 — no class on body — no blur applied
+   (nothing to declare — absence of class means absence of blur)
+   ════════════════════════════════════════════════════════════════════ */
+
+
+/* ─── TOAST STYLES ──────────────────────────────────────────────────────────── */
+
+#siwa-toast {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 13px;
+  padding: 8px 18px;
+  border-radius: 20px;
+  z-index: 999999;
+  pointer-events: none;
   opacity: 1;
+  transition: opacity 0.4s ease;
 }
 
-/* ─── .privacy-off override — disables ALL blur ───────────────────────────── */
-/*
- * The JS toggle adds/removes .privacy-off on <body>.
- * These rules override everything above with maximum specificity.
- */
-body.privacy-off div[class*="message-in"] span[dir],
-body.privacy-off div[class*="message-in"] div[class*="copyable-text"],
-body.privacy-off div[data-testid="msg-container"] span[dir],
-body.privacy-off div[data-testid="msg-container"] div[class*="copyable-text"],
-body.privacy-off div[class*="message-out"] span[dir],
-body.privacy-off div[class*="message-out"] div[class*="copyable-text"],
-body.privacy-off [data-testid="cell-frame-container"] span[dir],
-body.privacy-off div[aria-label][role="row"] span[dir],
-body.privacy-off [data-testid="cell-frame-title"] span,
-body.privacy-off [data-testid="conversation-header"] span[dir],
-body.privacy-off header span[dir],
-body.privacy-off [data-testid="cell-frame-container"] img,
-body.privacy-off [data-testid="conversation-header"] img,
-body.privacy-off [data-testid="avatar"] img,
-body.privacy-off img[src^="blob:"],
-body.privacy-off video[src^="blob:"],
-body.privacy-off div[class*="sticker"] img {
+#siwa-toast.fade-out {
+  opacity: 0;
+}
+
+
+/* ─── AI RIGHT-CLICK MENU STYLES ────────────────────────────────────────────── */
+
+#siwa-ai-menu {
+  position: fixed;
+  background: #fff;
+  border: 1px solid rgba(0,0,0,0.12);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+  z-index: 999998;
+  overflow: hidden;
+  min-width: 180px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 13px;
+}
+
+#siwa-ai-menu .siwa-menu-item {
+  padding: 10px 16px;
+  cursor: pointer;
+  color: #111;
+  white-space: nowrap;
+}
+
+#siwa-ai-menu .siwa-menu-item:hover {
+  background: #f0f2f5;
   filter: none !important;
   opacity: 1 !important;
 }
 
-body.privacy-off div[data-testid="conversation-compose-box-input"],
-body.privacy-off div[contenteditable="true"][data-tab] {
-  opacity: 1 !important;
-  filter: none !important;
+#siwa-ai-menu .siwa-menu-header {
+  padding: 7px 16px 4px;
+  font-size: 11px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #f0f2f5;
 }

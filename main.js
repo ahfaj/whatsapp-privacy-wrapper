@@ -4,163 +4,256 @@ const {
   app,
   BrowserWindow,
   BrowserView,
-  globalShortcut,
-  session,
-  shell,
   ipcMain,
+  globalShortcut,
+  shell,
+  screen,
+  session,
+  Notification,
 } = require('electron');
 const path = require('path');
-const fs = require('fs');
+const fs   = require('fs');
 
-const WHATSAPP_ORIGIN = 'https://web.whatsapp.com';
+const settings = require('./settings');
+const tray     = require('./tray');
+const updater  = require('./updater');
 
-let mainWindow = null;
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const WHATSAPP_URL = 'https://web.whatsapp.com';
+const CHROME_UA    = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
+const PRELOAD_PATH = path.join(__dirname, 'preload.js');
+
+// ─── App state ────────────────────────────────────────────────────────────────
+
+let mainWindow   = null;
 let whatsappView = null;
 
-// ─── Read injection files once at startup ────────────────────────────────────
-// Files are read from disk in the main process — never fetched over the network.
-const injectCSS = fs.readFileSync(path.join(__dirname, 'privacy', 'inject.css'), 'utf8');
-const injectJS  = fs.readFileSync(path.join(__dirname, 'privacy', 'inject.js'),  'utf8');
+let currentLocale           = {};
+let currentBlurMode         = 1;
+let prePresentationBlurMode = 1;
 
-// ─── Helper: is a URL on the trusted origin? ─────────────────────────────────
-function isWhatsAppURL(url) {
+// ─── Locale helper ────────────────────────────────────────────────────────────
+
+function t(key, vars) {
+  let str = currentLocale[key] || key;
+  if (vars) Object.keys(vars).forEach(k => { str = str.replace('{' + k + '}', vars[k]); });
+  return str;
+}
+
+function loadLocale() {
+  currentLocale = settings.getLocale();
+  updater.setLocale(currentLocale);
+}
+
+// ─── BrowserView security preferences ────────────────────────────────────────
+
+function secureWebPrefs(preload) {
+  return {
+    nodeIntegration:            false,
+    contextIsolation:           true,
+    sandbox:                    true,
+    webSecurity:                true,
+    allowRunningInsecureContent:false,
+    webviewTag:                 false,
+    navigateOnDragDrop:         false,
+    preload:                    preload || undefined,
+  };
+}
+
+// ─── WhatsApp BrowserView ─────────────────────────────────────────────────────
+
+function createWhatsAppView() {
+  const wa = session.fromPartition('persist:whatsapp');
+  wa.setUserAgent(CHROME_UA);
+  wa.setPermissionRequestHandler((_wc, permission, cb) => {
+    cb(['media', 'notifications'].includes(permission));
+  });
+
+  whatsappView = new BrowserView({
+    webPreferences: { ...secureWebPrefs(PRELOAD_PATH), session: wa },
+  });
+  mainWindow.addBrowserView(whatsappView);
+  fitWhatsAppView();
+
+  // Navigation lockdown — whatsapp.com only
+  whatsappView.webContents.on('will-navigate', (event, url) => {
+    try {
+      if (new URL(url).hostname !== 'web.whatsapp.com') {
+        event.preventDefault();
+        shell.openExternal(url);
+      }
+    } catch { event.preventDefault(); }
+  });
+
+  whatsappView.webContents.setWindowOpenHandler(({ url }) => {
+    shell.openExternal(url);
+    return { action: 'deny' };
+  });
+
+  whatsappView.webContents.on('did-finish-load', () => {
+    injectPrivacyLayer();
+    whatsappView.webContents.send('locale-ready', currentLocale);
+  });
+
+  whatsappView.webContents.loadURL(WHATSAPP_URL);
+}
+
+function fitWhatsAppView() {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  const { width, height } = mainWindow.getContentBounds();
+  if (whatsappView) whatsappView.setBounds({ x: 0, y: 0, width, height });
+}
+
+// ─── Privacy injection ────────────────────────────────────────────────────────
+
+function injectPrivacyLayer() {
+  if (!whatsappView || whatsappView.webContents.isDestroyed()) return;
   try {
-    return new URL(url).origin === WHATSAPP_ORIGIN;
-  } catch {
-    return false;
+    const css = fs.readFileSync(path.join(__dirname, 'privacy', 'inject.css'), 'utf8');
+    const js  = fs.readFileSync(path.join(__dirname, 'privacy', 'inject.js'),  'utf8');
+    whatsappView.webContents.insertCSS(css);
+    whatsappView.webContents.executeJavaScript(js);
+  } catch (err) {
+    console.error('Failed to inject privacy layer:', err);
   }
 }
 
-// ─── Create window ────────────────────────────────────────────────────────────
-function createWindow() {
-  // Persistent session — keeps the user logged in across launches.
-  const whatsappSession = session.fromPartition('persist:whatsapp');
+// ─── Blur cycle ───────────────────────────────────────────────────────────────
 
-  // Spoof a real Chrome user agent so WhatsApp Web accepts the browser and
-  // enables calling features. Electron's default UA includes the word "Electron"
-  // which WhatsApp detects and uses to hide calls and redirect to the native app.
-  whatsappSession.setUserAgent(
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) ' +
-    'AppleWebKit/537.36 (KHTML, like Gecko) ' +
-    'Chrome/131.0.0.0 Safari/537.36'
-  );
+function cycleBlur() {
+  currentBlurMode = (currentBlurMode % 4) + 1;
+  if (whatsappView && !whatsappView.webContents.isDestroyed()) {
+    whatsappView.webContents.send('cycle-blur', currentBlurMode);
+  }
+  tray.updateBlurMode(currentBlurMode);
+}
 
-  // Permission handler.
-  // Allowed: media (camera + mic) and notifications — both required for calls.
-  // Everything else is denied.
-  whatsappSession.setPermissionRequestHandler((_webContents, permission, callback) => {
-    const allowed = ['media', 'notifications'];
-    callback(allowed.includes(permission));
-  });
+// ─── Presentation mode ────────────────────────────────────────────────────────
 
-  // Shell BrowserWindow — holds no web content itself.
+function activatePresentationMode() {
+  if (!settings.get('presentationModeAuto')) return;
+  prePresentationBlurMode = currentBlurMode;
+  currentBlurMode = 1;
+  if (whatsappView && !whatsappView.webContents.isDestroyed()) {
+    whatsappView.webContents.send('presentation-mode-active');
+  }
+  tray.updateBlurMode(1);
+  new Notification({ title: 'SiWhatsapp', body: t('presentation.active') }).show();
+}
+
+function deactivatePresentationMode() {
+  if (!settings.get('presentationModeAuto')) return;
+  currentBlurMode = prePresentationBlurMode;
+  if (whatsappView && !whatsappView.webContents.isDestroyed()) {
+    whatsappView.webContents.send('cycle-blur', currentBlurMode);
+  }
+  tray.updateBlurMode(currentBlurMode);
+  new Notification({ title: 'SiWhatsapp', body: t('presentation.ended') }).show();
+}
+
+// ─── Main window ──────────────────────────────────────────────────────────────
+
+function createMainWindow() {
   mainWindow = new BrowserWindow({
-    width: 1280,
+    width:  1200,
     height: 800,
-    minWidth: 800,
-    minHeight: 600,
+    minWidth:  480,
+    minHeight: 320,
     title: 'SiWhatsapp',
-    icon: path.join(__dirname, 'assets', 'icon.ico'),
+    show:  false,
     webPreferences: {
-      // The BrowserWindow itself has no web content; lock it down anyway.
       nodeIntegration: false,
       contextIsolation: true,
-      webviewTag: false,        // <webview> tag is disabled — we use BrowserView
+      webSecurity: true,
+      sandbox: true,
+      webviewTag: false,
     },
   });
 
-  // ─── BrowserView — the actual WhatsApp renderer ───────────────────────────
-  whatsappView = new BrowserView({
-    webPreferences: {
-      nodeIntegration: false,               // ✓ Security non-negotiable #1
-      contextIsolation: true,               // ✓ Security non-negotiable #2
-      sandbox: true,                        // Chromium sandbox
-      webSecurity: true,                    // ✓ Security non-negotiable #3
-      allowRunningInsecureContent: false,   // No mixed content
-      webviewTag: false,                    // Belt-and-suspenders
-      navigateOnDragDrop: false,            // Drag-drop can't trigger navigation
-      session: whatsappSession,
-      preload: path.join(__dirname, 'preload.js'),
-    },
+  mainWindow.setMenu(null);
+  mainWindow.loadURL('about:blank');
+
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.show();
+    createWhatsAppView();
   });
 
-  mainWindow.setBrowserView(whatsappView);
+  mainWindow.on('resize',     fitWhatsAppView);
+  mainWindow.on('maximize',   fitWhatsAppView);
+  mainWindow.on('unmaximize', fitWhatsAppView);
+  mainWindow.on('closed', () => { mainWindow = null; app.quit(); });
+}
 
-  // Fill the window with the BrowserView, accounting for the menu bar (if any).
-  resizeView();
-  mainWindow.on('resize', resizeView);
+// ─── IPC handlers ─────────────────────────────────────────────────────────────
 
-  // ─── Navigation lockdown ──────────────────────────────────────────────────
-  const wc = whatsappView.webContents;
-
-  // Block navigation away from WhatsApp — open in system browser instead.
-  wc.on('will-navigate', (event, url) => {
-    if (!isWhatsAppURL(url)) {
-      event.preventDefault();
-      shell.openExternal(url);
+function registerIpcHandlers() {
+  // Renderer → main: blur mode updated after cycle
+  // Validated in preload.js; double-checked here
+  ipcMain.on('blur-mode-changed', (_e, mode) => {
+    if ([1, 2, 3, 4].includes(mode)) {
+      currentBlurMode = mode;
+      tray.updateBlurMode(mode);
     }
-  });
-
-  // Block new windows — open external URLs in the system browser.
-  wc.setWindowOpenHandler(({ url }) => {
-    if (!isWhatsAppURL(url)) {
-      shell.openExternal(url);
-    }
-    return { action: 'deny' };   // Always deny — we never want a new Electron window
-  });
-
-  // ─── Inject privacy layer after every page load ───────────────────────────
-  wc.on('did-finish-load', async () => {
-    try {
-      await wc.insertCSS(injectCSS);
-      await wc.executeJavaScript(injectJS);
-    } catch (err) {
-      console.error('Injection failed:', err);
-    }
-  });
-
-  // ─── Global shortcut: Alt+W toggles blur ─────────────────────────────────
-  globalShortcut.register('Alt+W', () => {
-    wc.send('toggle-blur');
-  });
-
-  // ─── IPC: tray "Toggle blur" button ──────────────────────────────────────
-  ipcMain.on('tray-toggle-blur', () => {
-    wc.send('toggle-blur');
-  });
-
-  // ─── Load WhatsApp ────────────────────────────────────────────────────────
-  wc.loadURL(WHATSAPP_ORIGIN);
-
-  // ─── Tray ─────────────────────────────────────────────────────────────────
-  const { initTray } = require('./tray');
-  initTray(mainWindow, app);
-
-  mainWindow.on('closed', () => {
-    mainWindow = null;
   });
 }
 
-// ─── Resize BrowserView to fill the window ───────────────────────────────────
-function resizeView() {
-  if (!mainWindow || !whatsappView) return;
-  const bounds = mainWindow.getContentBounds();
-  whatsappView.setBounds({ x: 0, y: 0, width: bounds.width, height: bounds.height });
-  whatsappView.setAutoResize({ width: true, height: true });
+// ─── Global shortcuts ─────────────────────────────────────────────────────────
+
+function registerShortcuts() {
+  globalShortcut.register('Alt+W', cycleBlur);
+}
+
+// ─── Tray action router ───────────────────────────────────────────────────────
+
+function handleTrayAction(action, payload) {
+  switch (action) {
+    case 'toggle-blur':
+      cycleBlur();
+      break;
+    case 'check-updates':
+      updater.checkForUpdates(mainWindow);
+      break;
+    case 'setting-changed':
+      // presentationModeAuto toggle is already persisted in tray.js
+      break;
+    case 'language-changed':
+      loadLocale();
+      tray.update(currentLocale, currentBlurMode);
+      if (whatsappView && !whatsappView.webContents.isDestroyed()) {
+        whatsappView.webContents.send('locale-ready', currentLocale);
+      }
+      break;
+    case 'show-window':
+      if (mainWindow) { mainWindow.show(); mainWindow.focus(); }
+      break;
+    case 'quit':
+      app.quit();
+      break;
+  }
+}
+
+// ─── Display events ───────────────────────────────────────────────────────────
+
+function registerDisplayEvents() {
+  screen.on('display-added',   activatePresentationMode);
+  screen.on('display-removed', deactivatePresentationMode);
 }
 
 // ─── App lifecycle ────────────────────────────────────────────────────────────
-app.whenReady().then(createWindow);
 
-app.on('window-all-closed', () => {
-  globalShortcut.unregisterAll();
-  app.quit();
-});
-
-app.on('activate', () => {
-  if (mainWindow === null) createWindow();
+app.whenReady().then(() => {
+  loadLocale();
+  createMainWindow();
+  registerIpcHandlers();
+  registerShortcuts();
+  registerDisplayEvents();
+  tray.create(currentLocale, handleTrayAction);
+  currentBlurMode = 1; // always start at all-blur
 });
 
 app.on('will-quit', () => {
   globalShortcut.unregisterAll();
 });
+
+app.on('window-all-closed', () => app.quit());
