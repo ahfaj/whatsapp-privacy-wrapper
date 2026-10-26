@@ -73,10 +73,10 @@
   // ---- Detail CHR tab ----
   await click('.nav-tabs > li:nth-child(1) > a');
   await click('.panel:nth-child(1) .accordion-toggle');
-  await setVal('.form-group:nth-child(1) > .col-md-4 > .form-control', 'ST-ITJEN I/3-056 Tahun 2025');
-  await setVal('.form-group:nth-child(1) > .col-md-2 > .form-control', '2025-09-15');
-  await setVal('.form-group:nth-child(2) > .col-md-4 > .form-control', 'S-505/MK.03/2025');
-  await setVal('.form-group:nth-child(2) > .col-md-2 > .form-control', '2025-07-24');
+  await setVal('.form-group:nth-child(1) > .col-md-4 > .form-control', 'ST-ITJEN I/3-120 Tahun 2026');
+  await setVal('.form-group:nth-child(1) > .col-md-2 > .form-control', '2026-10-19');
+  await setVal('.form-group:nth-child(2) > .col-md-4 > .form-control', 'S-691/MK.03/2026');
+  await setVal('.form-group:nth-child(2) > .col-md-2 > .form-control', '2026-09-30');
 
   // [n, default uraian, conclusion when uraian was empty]
   const krit = [
@@ -110,7 +110,7 @@
   }
 
   await click('.panel:nth-child(11) .accordion-toggle');
-  await setVal('#koreksi .form-control', 'Sesuai dengan catatan hasil reviu tersebut di atas');
+  await setVal('#koreksi .form-control', '1.\tSesuai dengan catatan hasil reviu tersebut di atas\n2.\tPelaksanaan reviu yang dilaksanakan oleh APIP atas dokumen usulan RKA-K/L dilaksanakan sebelum diselesaikannya tahapan penelitian dan evaluasi secara berjenjang oleh Unit Eselon I teknis serta Biro Perencanaan pada aplikasi E-Planning');
   await click('.panel:nth-child(12) .accordion-toggle');
   await setVal('#rekomendasi .form-control',
     '1.\tMelakukan perbaikan dan melengkapi kekurangan dokumen pada E Planning sesuai hasil evaluasi Itjen. \n2.\tDapat diproses lanjut sesuai ketentuan yang berlaku setelah dilakukan perbaikan sesuai catatan reviu.');
